@@ -1,5 +1,6 @@
 package com.example.picktheperfectwatermelon.view;
 
+import android.app.Application;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -10,6 +11,8 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+
+import com.example.picktheperfectwatermelon.App;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,8 +81,11 @@ public class AudioView extends View {
     public void setWaveData(byte[] data) {
         this.waveData = readyData(data);
         genSamplingPoint(data);
+
         invalidate();
     }
+
+
 
     public void setStyle(ShowStyle upShowStyle, ShowStyle downShowStyle) {
         this.upShowStyle = upShowStyle;

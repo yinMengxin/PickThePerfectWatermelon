@@ -22,13 +22,23 @@ public class ResultActivity extends AppCompatActivity {
         Intent intent = getIntent();
         setData(intent.getIntExtra("waterCon",0),
                 intent.getIntExtra("sweetness",0),
-                intent.getIntExtra("texture",0));
+                intent.getIntExtra("texture",100));
     }
 
     private void setData(int waterCon,int sweetness,int texture){
         result_waterCon_Pro.setProgress(waterCon);
         result_sweetness_Pro.setProgress(sweetness);
         result_texture_Pro.setProgress(texture);
+
+        if(0 < waterCon ){
+            if(waterCon < 40){
+                result_tv.setText("TRY AGAIN :(");
+            }else if(waterCon < 70){
+                result_tv.setText("NOT THE BEST...");
+            }else {
+                result_tv.setText("EXCELLENT CHOICE!");
+            }
+        }
 
     }
 

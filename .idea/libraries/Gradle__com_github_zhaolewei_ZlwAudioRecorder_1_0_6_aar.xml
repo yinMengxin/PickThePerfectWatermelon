@@ -1,8 +1,8 @@
 <component name="libraryTable">
   <library name="Gradle: com.github.zhaolewei:ZlwAudioRecorder:1.0.6@aar">
     <CLASSES>
-      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/7d8a86c9d7be0681896f7ec72f946588/jars/classes.jar!/" />
-      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/7d8a86c9d7be0681896f7ec72f946588/res" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/3041ee0349853ac487cf44787f232cf6/res" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/3041ee0349853ac487cf44787f232cf6/jars/classes.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>

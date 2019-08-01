@@ -3,15 +3,18 @@ package com.example.picktheperfectwatermelon;
 
 import android.content.Intent;
 
+
 import android.os.Environment;
 
-import android.support.v7.app.AppCompatActivity;
+import android.os.Handler;
+import android.os.Message;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.example.picktheperfectwatermelon.AudioAnylysis.ReadStandard;
+import com.example.picktheperfectwatermelon.loading.BaseActivity;
 import com.example.picktheperfectwatermelon.view.AudioView;
 import com.zlw.main.recorderlib.RecordManager;
 import com.zlw.main.recorderlib.recorder.RecordConfig;
@@ -24,22 +27,53 @@ import com.zlw.main.recorderlib.recorder.listener.RecordStateListener;
 import com.zlw.main.recorderlib.utils.Logger;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-    private static final String TAG = "yin" ;
+import javax.sql.DataSource;
+
+public class MainActivity extends BaseActivity implements View.OnClickListener {
+    private static final String TAG = "yin";
+    private static final int END_DELAY = 0;//三秒录音结束
+    private static final int END_DATA_ANALYSIS = 1;//数据分析完成
 
     private Button bt_record;
-    private byte butttonFlag;
+    private boolean butttonFlag;
     private AudioView audioView;
 
     final RecordManager recordManager = RecordManager.getInstance();
-    int waterCon=20,sweetness=40,texture=80;
+    int waterCon = 20;
+
+
+    private Handler uiHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case END_DELAY://三秒录音结束
+                    recordManager.stop();//停止录音
+                    Toast.makeText(MainActivity.this,
+                            "Stop recording！The system is conducting data analysis", Toast.LENGTH_SHORT).show();
+                    loadData();//显示加载页面
+                    new MyThread().start();
+                    break;
+                case END_DATA_ANALYSIS://对音频文件操作成功
+                    showLoadSuccess();
+                    butttonFlag = false;//设置停止
+                    waterCon = msg.arg1;//取出计算结果
+                    bt_record.setText("Checking The Result");
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Logger.i(TAG, "onCreate %s", "测试");
 
         initView();
         initRecord();//录音初始化
@@ -55,32 +89,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         //录音状态监听
         recordManager.setRecordStateListener(new RecordStateListener() {
-            @Override
-            public void onStateChange(RecordHelper.RecordState state) {
-                Logger.i(TAG, "onStateChange %s", state.name());
-                switch (state) {
-                    case PAUSE://暂停
-                        break;
-                    case IDLE://空闲
-                        break;
-                    case RECORDING:
-                        //Toast.makeText(MainActivity.this, "recording", Toast.LENGTH_SHORT).show();
-                        break;
-                    case STOP://停止
-                        //Toast.makeText(MainActivity.this, "stop recording ", Toast.LENGTH_SHORT).show();
-                        break;
-                    case FINISH://结束
-                        break;
-                    default:
-                        break;
-                }
-            }
-            @Override
-            public void onError(String error) {
-                Logger.i(TAG, "onError %s", error);
-            }
-        }
-    );
+                                                 @Override
+                                                 public void onStateChange(RecordHelper.RecordState state) {
+                                                     Logger.i(TAG, "onStateChange %s", state.name());
+                                                     switch (state) {
+                                                         case PAUSE://暂停
+                                                             break;
+                                                         case IDLE://空闲
+                                                             break;
+                                                         case RECORDING:
+                                                             //Toast.makeText(MainActivity.this, "recording", Toast.LENGTH_SHORT).show();
+                                                             break;
+                                                         case STOP://停止
+                                                             //Toast.makeText(MainActivity.this, "stop recording ", Toast.LENGTH_SHORT).show();
+                                                             break;
+                                                         case FINISH://结束
+                                                             break;
+                                                         default:
+                                                             break;
+                                                     }
+                                                 }
+
+                                                 @Override
+                                                 public void onError(String error) {
+                                                     Logger.i(TAG, "onError %s", error);
+                                                 }
+                                             }
+        );
         //录音结果监听
         recordManager.setRecordResultListener(new RecordResultListener() {
             @Override
@@ -107,60 +142,119 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         recordManager.setRecordDataListener(new RecordDataListener() {
             @Override
             public void onData(byte[] data) {
-                cal(data);
 
             }
         });
     }
 
-    private void cal(final byte [] data){
-    }
     private void initView() {
         bt_record = (Button) findViewById(R.id.bt_record);
         audioView = (AudioView) findViewById(R.id.audioView);
         bt_record.setOnClickListener(this);
-        butttonFlag = 0;//设置按钮初始状态
+        butttonFlag = true;//设置按钮初始状态
     }
 
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.bt_record:
-                if (0 == butttonFlag) {
-                    Toast.makeText(MainActivity.this, "start recording", Toast.LENGTH_SHORT).show();
+                if (butttonFlag) {
+                    Toast.makeText(MainActivity.this, "Start recording!Please knock 3 times in 3 seconds.", Toast.LENGTH_SHORT).show();
                     bt_record.setText("END");
                     recordManager.start();//开始录音
-                    butttonFlag = 1;//设置停止
-                } else if(1 == butttonFlag) {
+                    //设置三秒定时
+                    new delayThread().start();
 
-
-
-                    butttonFlag = 2;
-                    recordManager.stop();//停止录音
-                    Toast.makeText(MainActivity.this, "stop recording", Toast.LENGTH_SHORT).show();
-                    bt_record.setText("Checking The Result");
-                }else if(2 == butttonFlag){
-                    butttonFlag = 0;
+                } else {
+                    butttonFlag = true;
                     bt_record.setText("record");
+                    Logger.i(TAG,"计算结果：%s",waterCon);
                     //跳转结果页面
                     Intent intent = new Intent(MainActivity.this, ResultActivity.class);
                     intent.putExtra("waterCon", waterCon);
-                    intent.putExtra("sweetness", sweetness);
-                    intent.putExtra("texture", texture);
+                    intent.putExtra("sweetness", waterCon);
+                    intent.putExtra("texture", (100-waterCon));
                     startActivity(intent);
                     finish();
                 }
                 break;
+                default:
+                    break;
         }
     }
 
+    private void loadData() {
+        showLoading();
+    }
+
+    @Override
+    protected void onLoadRetry() {
+        loadData();
+    }
 
     @Override
     protected void onStop() {
         super.onStop();
         recordManager.stop();
+
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+    }
+
+    //进行耗时线程操作
+    class MyThread extends Thread {
+
+        @Override
+        public void run() {
+            //Thread.sleep(1000);
+            int arg_1 = analysis();
+            Message msg = new Message();
+            msg.what = END_DATA_ANALYSIS;//数据分析成功
+            msg.arg1 = arg_1;//将结果载入
+            uiHandler.sendMessage(msg);
+        }
+        private int analysis(){
+            ReadStandard rs = new ReadStandard("excellent");
+            rs.readFile();
+            //rs.writeFile("excellent");
+            rs.writeFilteredFile("excellent");
+
+            ReadStandard rs_not = new ReadStandard("not_the_best");
+            rs_not.readFile();
+            //rs_not.writeFile("not_the_best");
+            rs_not.writeFilteredFile("not_the_best");
+
+            ReadStandard rs_try = new ReadStandard("try_again");
+            rs_try.readFile();
+            rs_try.writeFilteredFile("not_try");
+
+
+            return 40;
+        }
+
+
+
+
+    }
+
+    class delayThread extends Thread{
+        @Override
+        public void run() {
+            try {
+                Thread.sleep(3000);
+
+                Message msg = new Message();
+                msg.what = END_DELAY;//延时3秒结束
+                uiHandler.sendMessage(msg);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
 
 }
