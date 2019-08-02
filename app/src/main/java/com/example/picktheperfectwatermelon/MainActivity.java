@@ -40,6 +40,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private Button bt_record;
     private boolean butttonFlag;
     private AudioView audioView;
+    private String lastRecordFileName;//上次的录音文件
 
     final RecordManager recordManager = RecordManager.getInstance();
     int waterCon = 20;
@@ -60,6 +61,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                     showLoadSuccess();
                     butttonFlag = false;//设置停止
                     waterCon = msg.arg1;//取出计算结果
+                    bt_record.setVisibility(View.VISIBLE);
                     bt_record.setText("Checking The Result");
                     break;
                 default:
@@ -120,6 +122,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         recordManager.setRecordResultListener(new RecordResultListener() {
             @Override
             public void onResult(File result) {
+                lastRecordFileName = result.getAbsolutePath();
+                Logger.i(TAG,"文件名：%s",lastRecordFileName);
                 Toast.makeText(MainActivity.this, "录音文件： " + result.getAbsolutePath(), Toast.LENGTH_SHORT).show();
             }
         });
@@ -160,7 +164,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             case R.id.bt_record:
                 if (butttonFlag) {
                     Toast.makeText(MainActivity.this, "Start recording!Please knock 3 times in 3 seconds.", Toast.LENGTH_SHORT).show();
-                    bt_record.setText("END");
+                    bt_record.setVisibility(View.INVISIBLE);
+                    //bt_record.setText("END");
                     recordManager.start();//开始录音
                     //设置三秒定时
                     new delayThread().start();
@@ -208,19 +213,29 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     //进行耗时线程操作
     class MyThread extends Thread {
 
+
         @Override
         public void run() {
-            //Thread.sleep(1000);
-            int arg_1 = analysis();
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            //int arg_1 = 20;
+            int arg_1 = analysis_lastRecoedFile(lastRecordFileName);
+
             Message msg = new Message();
             msg.what = END_DATA_ANALYSIS;//数据分析成功
             msg.arg1 = arg_1;//将结果载入
             uiHandler.sendMessage(msg);
         }
-        private int analysis(){
+        private int analysis_lastRecoedFile(String lastR){
+            ReadStandard rs = new ReadStandard(lastR);
+            return rs.readFile();
+        }
+        private void analysis(){
             ReadStandard rs = new ReadStandard("excellent");
             rs.readFile();
-            //rs.writeFile("excellent");
             rs.writeFilteredFile("excellent");
 
             ReadStandard rs_not = new ReadStandard("not_the_best");
@@ -230,10 +245,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
             ReadStandard rs_try = new ReadStandard("try_again");
             rs_try.readFile();
-            rs_try.writeFilteredFile("not_try");
+            rs_try.writeFilteredFile("try_again");
 
-
-            return 40;
         }
 
 

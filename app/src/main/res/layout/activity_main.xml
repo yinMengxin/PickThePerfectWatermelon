@@ -27,6 +27,7 @@
         android:layout_below="@id/audioView"
         android:text="record"
         android:layout_marginTop="40dp"
+
         />
 
 

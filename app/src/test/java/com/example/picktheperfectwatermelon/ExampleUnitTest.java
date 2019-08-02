@@ -19,6 +19,27 @@ import static org.junit.Assert.*;
     public void addition_isCorrect() {
         assertEquals(4, 2 + 2);
     }
+    @Test
+    public void test(){
+        int re ;
+        int len =2437;
+        if(0 < len ){
+
+            if(len < 1500){
+                re = (30/1500) *len;
+            }else if( len < 4000){
+                re = 30 +((70-30)/(4000-1500))*(len - 1500);
+            }else if(len < 6000){
+                re = 70 + ((100-70)/(6000-4000)) * (len -4000);
+            }else {
+                re = 100;
+            }
+
+        }else {
+            re = 20;
+        }
+
+    }
     //@Test
    // public void readWav(){
 //        ReadStandard rs = new ReadStandard("excellent");
